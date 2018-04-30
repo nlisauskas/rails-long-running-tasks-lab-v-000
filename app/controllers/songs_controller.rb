@@ -1,16 +1,63 @@
 class SongsController < ApplicationController
+require 'csv'
 
-  require 'csv'
+  def upload
+      CSV.foreach(params[:file].path, headers: true) do |song|
+      @artist = Artist.find_or_create_by(name: song[1])
+      Song.create(title: song[0], artist: @artist, release_year: song[2],
+      combined: song[3], first: song[4], year: song[5], playcount: song[6], fxg: song[7])
+  end
+    redirect_to songs_path
+  end
 
   def index
     @songs = Song.all
   end
 
-  def upload
-    CSV.foreach(params[:songs].path, headers: true) do |song|
-      Song.create(email: song[0], first_name: song[1], last_name: song[2])
-    end
-    redirect_to customers_path
+  def show
+    @song = Song.find(params[:id])
   end
 
+  def new
+    @song = Song.new
+  end
+
+  def create
+    @song = Song.new(song_params)
+
+    if @song.save
+      redirect_to @song
+    else
+      render :new
+    end
+  end
+
+  def edit
+    @song = Song.find(params[:id])
+  end
+
+  def update
+    @song = Song.find(params[:id])
+
+    @song.update(song_params)
+
+    if @song.save
+      redirect_to @song
+    else
+      render :edit
+    end
+  end
+
+  def destroy
+    @song = Song.find(params[:id])
+    @song.destroy
+    flash[:notice] = "Song deleted."
+    redirect_to songs_path
+  end
+
+  private
+
+  def song_params
+    params.require(:song).permit(:title, :artist_name)
+  end
 end
